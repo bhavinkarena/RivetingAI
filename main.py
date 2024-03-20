@@ -2,7 +2,6 @@ import re
 from fastapi import FastAPI, Depends, Form, HTTPException,File, Query, Request, UploadFile, Response
 from fastapi.responses import HTMLResponse
 from httpx import HTTPError
-from sqlalchemy import func
 from sqlalchemy.orm import Session as DBSession
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
