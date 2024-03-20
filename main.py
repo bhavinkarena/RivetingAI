@@ -49,10 +49,22 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
+origins = [
+    "*",
+    "http://192.168.50.245",
+    "http://192.168.50.245:8000",
+    "http://127.0.0.1",
+    "http://localhost",
+    "https://rivetingai.onrender.com/",
+    "http://localhost:3000"
+]
+
+
 app.add_middleware(SessionMiddleware, secret_key=os.getenv('SESSION_SECRET_KEY'))
 
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],
