@@ -2,7 +2,7 @@ from datetime import datetime, timedelta , timezone
 import uuid
 from decouple import config
 from fastapi import Form
-from jose import jwt
+from jose import jwt as jose_jwt
 from requests import Session
 from models import Document, SharedWith, Team, TeamUser, User, Comment
 
@@ -13,7 +13,7 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, config('SECRET_KEY'), algorithm=config('ALGORITHM'))
+    encoded_jwt = jose_jwt.encode(to_encode, config('SECRET_KEY'), algorithm=config('ALGORITHM'))
     return encoded_jwt
 
 def get_user_by_email(db: Session, email: str):
