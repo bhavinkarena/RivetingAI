@@ -5,7 +5,6 @@ from httpx import HTTPError
 from sqlalchemy import func
 from sqlalchemy.orm import Session as DBSession
 from passlib.context import CryptContext
-from jose import JWTError, jwt
 from datetime import datetime, timedelta
 import os
 import boto3
