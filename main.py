@@ -434,6 +434,7 @@ GOOGLE_REDIRECT_URI = config("GOOGLE_REDIRECT_URI")
 @app.get("/login/google/")
 async def login_with_google():
     redirect_uri = f"{GOOGLE_REDIRECT_URI}"
+    print(redirect_uri)
     return RedirectResponse(url=f"https://accounts.google.com/o/oauth2/auth?response_type=code&client_id={GOOGLE_CLIENT_ID}&redirect_uri={redirect_uri}&scope=openid%20profile%20email")
 
 @app.get("/login/google/callback")
