@@ -83,7 +83,7 @@ async def root():
 
 @app.post("/register")
 def register_user(
-    user: schemas.UserCreate, team_token: str = None, db: DBSession = Depends(get_db)
+        response: Response,user: schemas.UserCreate, team_token: str = None, db: DBSession = Depends(get_db)
 ):
     try:
         password = pwd_context.hash(user.password)
@@ -92,12 +92,20 @@ def register_user(
             raise HTTPException(
                 status_code=400, detail="This email is already registered."
             )
+
         else:
+            access_token_expires = timedelta(
+            minutes=int(config("ACCESS_TOKEN_EXPIRE_MINUTES"))
+            )
+            access_token = create_access_token(
+            data={"sub": db_user.email}, expires_delta=access_token_expires
+            )
             db_user = User(
                 first_name=user.first_name,
                 last_name=user.last_name,
                 email=user.email,
                 password=password,
+                security_token = access_token
             )
             db.add(db_user)
         db.commit()
@@ -111,6 +119,7 @@ def register_user(
             print(team_user)
             team_user.is_accept = True
         db.commit()
+        response.set_cookie(key="token", value=access_token)
         return {"message": "User created successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
