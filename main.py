@@ -94,20 +94,20 @@ def register_user(
             )
 
         else:
+            db_user = User(
+                first_name=user.first_name,
+                last_name=user.last_name,
+                email=user.email,
+                password=password,
+            )
+            db.add(db_user)
             access_token_expires = timedelta(
             minutes=int(config("ACCESS_TOKEN_EXPIRE_MINUTES"))
             )
             access_token = create_access_token(
             data={"sub": db_user.email}, expires_delta=access_token_expires
             )
-            db_user = User(
-                first_name=user.first_name,
-                last_name=user.last_name,
-                email=user.email,
-                password=password,
-                security_token = access_token
-            )
-            db.add(db_user)
+            db_user.security_token = access_token
         db.commit()
         if team_token:
             team = team_by_team_token(db, team_token=team_token)
