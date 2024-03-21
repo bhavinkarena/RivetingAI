@@ -152,8 +152,6 @@ def login_user(
         db.commit()
         response.set_cookie(key="token", value=access_token)
         print("-----------coockie token--------", request.cookies.get("token"))
-        if request.cookies.get("token") == None:
-            raise HTTPException(status_code=400, detail="Cookie is not set")
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
