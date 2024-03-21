@@ -150,7 +150,8 @@ def login_user(
             print(team_user)
             team_user.is_accept = True
         db.commit()
-        response.set_cookie(key="token", value=access_token)
+
+        response.set_cookie(key="token", value=access_token,path="/", secure=True, same_site='None', HttpOnly=True)
         print("-----------coockie token--------", request.cookies.get("token"))
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
