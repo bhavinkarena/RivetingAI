@@ -90,7 +90,7 @@ def register_user(
         emailexists = get_user_by_email(db, email=user.email)
         if emailexists:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="This email is already registered."
+                status_code=400, detail="This email is already registered."
             )
 
         else:
@@ -122,7 +122,6 @@ def register_user(
         return {"message": "User created successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=e)
-
 
 @app.post("/login")
 def login_user(
@@ -743,7 +742,6 @@ async def view_document(request:Request,document_id: int, db: DBSession = Depend
         return {"message": "Document viewed successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.get("/document/view_count/{document_id}")
 async def get_view_count(document_id: int, db: DBSession = Depends(get_db)):
