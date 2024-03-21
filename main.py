@@ -120,7 +120,7 @@ def register_user(
             raise HTTPException(status_code=400, detail="Cookie is not set")
         return {"message": "User created successfully"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=e)
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/login")
 def login_user(
@@ -152,10 +152,10 @@ def login_user(
         db.commit()
 
         response.set_cookie(key="token", value=access_token,path="/", secure=True, same_site='None', HttpOnly=True)
-        print("-----------coockie token--------", request.cookies.get("token"))
+        # print("-----------coockie token--------", request.cookies.get("token"))
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=e)
+        raise HTTPException(status_code=500, detail=str(e))
     
 @app.get("/logout")
 def logout_user(response: Response):
