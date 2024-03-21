@@ -87,7 +87,7 @@ def register_user(
         password = pwd_context.hash(user.password)
         emailexists = get_user_by_email(db, email=user.email)
         if emailexists:
-            raise HTTPException(
+            return HTTPException(
                 status_code=400, detail="This email is already registered."
             )
 
@@ -760,4 +760,4 @@ async def get_file_count(team_id: int, db: DBSession = Depends(get_db)):
 def read_current_user(request: Request,db: DBSession = Depends(get_db),):
     token = request.cookies.get("token")
     user = get_user_by_token(db, token=token)
-    return {"username": user.first_name + " " + user.last_name}
+    return {"firstname":user.first_name, "lastname":user.last_name, "email":user.email}
