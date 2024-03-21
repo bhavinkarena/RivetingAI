@@ -141,6 +141,7 @@ def login_user(
         access_token = create_access_token(
             data={"sub": db_user.email}, expires_delta=access_token_expires
         )
+        print(access_token)
         db_user.security_token = access_token
         if team_token:
             team = team_by_team_token(db, team_token=team_token)
