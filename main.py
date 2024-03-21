@@ -124,7 +124,7 @@ def register_user(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/login")
+@app.post("/login")
 def login_user(
     user: schemas.UserLogin,
     request: Request,
