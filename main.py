@@ -59,7 +59,6 @@ origins = [
     "http://localhost:3000"
 ]
 
-
 app.add_middleware(SessionMiddleware, secret_key=os.getenv('SESSION_SECRET_KEY'))
 
 app.add_middleware(
@@ -116,7 +115,7 @@ def register_user(
             team_user = get_teamUser_by_team_user(db, team=team.id, user=user.id)
             team_user.is_accept = True
         db.commit()
-        response.set_cookie(key="token", value=access_token)
+        response.set_cookie(key="token", value=access_token, path="/", secure=True, same_site='None')
         if request.cookies.get("token") is None:
             raise HTTPException(status_code=400, detail="Cookie is not set")
         return {"message": "User created successfully"}
@@ -151,7 +150,7 @@ def login_user(
             print(team_user)
             team_user.is_accept = True
         db.commit()
-        response.set_cookie(key="token", value=access_token, path="/", domain="https://rivetingai.onrender.com/login", secure=True)
+        response.set_cookie(key="token", value=access_token)
         print("-----------coockie token--------", request.cookies.get("token"))
         if request.cookies.get("token") == None:
             raise HTTPException(status_code=400, detail="Cookie is not set")
