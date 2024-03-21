@@ -83,14 +83,14 @@ async def root():
 
 @app.post("/register")
 def register_user(
-        response: Response,user: schemas.UserCreate, team_token: str = None, db: DBSession = Depends(get_db)
+        request: Request, response: Response, user: schemas.UserCreate, team_token: str = None, db: DBSession = Depends(get_db)
 ):
     try:
         password = pwd_context.hash(user.password)
         emailexists = get_user_by_email(db, email=user.email)
         if emailexists:
             raise HTTPException(
-                status_code=400, detail="This email is already registered."
+                status_code=status.HTTP_400_BAD_REQUEST, detail="This email is already registered."
             )
 
         else:
@@ -102,27 +102,27 @@ def register_user(
             )
             db.add(db_user)
             access_token_expires = timedelta(
-            minutes=int(config("ACCESS_TOKEN_EXPIRE_MINUTES"))
+                minutes=int(config("ACCESS_TOKEN_EXPIRE_MINUTES"))
             )
             access_token = create_access_token(
-            data={"sub": db_user.email}, expires_delta=access_token_expires
+                data={"sub": db_user.email}, expires_delta=access_token_expires
             )
             db_user.security_token = access_token
         db.commit()
         if team_token:
             team = team_by_team_token(db, team_token=team_token)
-            print(team.id)
             user = get_user_by_email(db, email=db_user.email)
-            print(user.id)
             add_user_to_team(db, team_id=team.id, user_id=user.id)
             team_user = get_teamUser_by_team_user(db, team=team.id, user=user.id)
-            print(team_user)
             team_user.is_accept = True
         db.commit()
         response.set_cookie(key="token", value=access_token)
+        if request.cookies.get("token") is None:
+            raise HTTPException(status_code=400, detail="Cookie is not set")
         return {"message": "User created successfully"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=e)
+
 
 @app.post("/login")
 def login_user(
@@ -481,6 +481,8 @@ async def google_callback(
                     profile_image=profile_data.get("picture"),
                 )
                 db.add(user)
+        if user==None:
+            user = emailexists
         # Generate an access token for the user
         access_token_expires = timedelta(
             minutes=int(config("ACCESS_TOKEN_EXPIRE_MINUTES"))
@@ -561,6 +563,8 @@ async def login_with_microsoft_callback(
                     profile_image=None,
                 )
                 db.add(user)
+        if user==None:
+            user = emailexists
         # Generate an access token for the user
         access_token_expires = timedelta(
             minutes=int(config("ACCESS_TOKEN_EXPIRE_MINUTES"))
