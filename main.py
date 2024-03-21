@@ -141,7 +141,6 @@ def login_user(
         access_token = create_access_token(
             data={"sub": db_user.email}, expires_delta=access_token_expires
         )
-        print(access_token)
         db_user.security_token = access_token
         if team_token:
             team = team_by_team_token(db, team_token=team_token)
@@ -152,7 +151,7 @@ def login_user(
             print(team_user)
             team_user.is_accept = True
         db.commit()
-        response.set_cookie(key="token", value=access_token)
+        response.set_cookie(key="token", value=access_token, path="/", domain="https://rivetingai.onrender.com", secure=True)
         print("-----------coockie token--------", request.cookies.get("token"))
         if request.cookies.get("token") == None:
             raise HTTPException(status_code=400, detail="Cookie is not set")
