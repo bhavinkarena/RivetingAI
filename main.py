@@ -44,7 +44,6 @@ from starlette.middleware.sessions import SessionMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -115,14 +114,50 @@ def register_user(
             team_user = get_teamUser_by_team_user(db, team=team.id, user=user.id)
             team_user.is_accept = True
         db.commit()
-        response.set_cookie(key="token", value=access_token, path="/", secure=True, same_site='None')
+        response.set_cookie(key="token", value=access_token)
         if request.cookies.get("token") is None:
             raise HTTPException(status_code=400, detail="Cookie is not set")
         return {"message": "User created successfully"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=e)
 
 @app.post("/login")
+# def login_user(
+#     user: schemas.UserLogin,
+#     request: Request,
+#     response: Response,
+#     team_token: str = None,
+#     db: DBSession = Depends(get_db),
+# ):
+#     try:
+#         db_user = get_user_by_email(db, email=user.email)
+#         if not db_user or not pwd_context.verify(user.password, db_user.password):
+#             raise HTTPException(status_code=400, detail="Invalid credentials")
+#         access_token_expires = timedelta(
+#             minutes=int(config("ACCESS_TOKEN_EXPIRE_MINUTES"))
+#         )
+#         access_token = create_access_token(
+#             data={"sub": db_user.email}, expires_delta=access_token_expires
+#         )
+#         db_user.security_token = access_token
+#         if team_token:
+#             team = team_by_team_token(db, team_token=team_token)
+#             print(team.id)
+#             user = get_user_by_email(db, email=db_user.email)
+#             print(user.id)
+#             team_user = get_teamUser_by_team_user(db, team=team.id, user=user.id)
+#             print(team_user)
+#             team_user.is_accept = True
+#         db.commit()
+#         response.set_cookie(key="token", value=access_token)
+#         print("-----------coockie token--------", request.cookies.get("token"))
+#         if request.cookies.get("token") == None:
+#             raise HTTPException(status_code=400, detail="Cookie is not set")
+#         return {"access_token": access_token, "token_type": "bearer"}
+#     except Exception as e:
+#         print("Error:", e)
+#         raise HTTPException(status_code=500, detail="Internal server error")
+    
 def login_user(
     user: schemas.UserLogin,
     request: Request,
@@ -143,20 +178,16 @@ def login_user(
         db_user.security_token = access_token
         if team_token:
             team = team_by_team_token(db, team_token=team_token)
-            print(team.id)
             user = get_user_by_email(db, email=db_user.email)
-            print(user.id)
             team_user = get_teamUser_by_team_user(db, team=team.id, user=user.id)
-            print(team_user)
             team_user.is_accept = True
         db.commit()
-
-        response.set_cookie(key="token", value=access_token,path="/", secure=True, same_site='None', HttpOnly=True)
-        # print("-----------coockie token--------", request.cookies.get("token"))
+        response.set_cookie(key="token", value=access_token, httponly=True)
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
+        print("Error:", e)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @app.get("/logout")
 def logout_user(response: Response):
     response.delete_cookie(key="token")
