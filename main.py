@@ -154,6 +154,8 @@ def login_user(
         db.commit()
         response.set_cookie(key="token", value=access_token)
         print("-----------coockie token--------", request.cookies.get("token"))
+        if request.cookies.get("token") == None:
+            raise HTTPException(status_code=400, detail="Cookie is not set")
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -188,7 +190,7 @@ def create_team_api(
         # Get the user who is creating the team
         token = request.cookies.get("token")
         user_owner = get_user_by_token(db, token=token)
-        
+        print("token:-",token)
         # Add the user who created the team as the team owner
         add_owner_to_team(db, team_id=team_db.id, user_id=user_owner.id)
         
@@ -497,7 +499,8 @@ async def google_callback(
             team_user.is_accept = True
         db.commit()
         response1.set_cookie(key="token", value=access_token)
-        return {"access_token": access_token, "token_type": "bearer"}
+        # return {"access_token": access_token, "token_type": "bearer"}
+        return RedirectResponse(url=f"http://localhost:3000/mydocuments")
     except HTTPError as e:
         raise HTTPException(status_code=400, detail=f"HTTP error occurred: {e}")
     except Exception as e:
