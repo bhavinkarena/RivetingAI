@@ -579,7 +579,7 @@ async def login_with_microsoft_callback(
             team_user.is_accept = True
         db.commit()
         response1.set_cookie(key="token", value=access_token)
-        return {"access_token": access_token, "token_type": "bearer"}
+        return RedirectResponse(url=f"http://localhost:3000/mydocuments")
     except HTTPError as e:
         raise HTTPException(status_code=400, detail=f"HTTP error occurred: {e}")
     except Exception as e:

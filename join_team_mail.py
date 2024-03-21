@@ -158,7 +158,7 @@ def send_email(recipient: str, teamToken: str, documentTeamName: str, firstName:
         </div>
         <div class="subcontent">
             <div class="firstlink">
-                <a href="http://localhost:8000/register?team_token={teamToken}" class="linkbtn">Click to Access {firstName}'s Document</a>
+                <a href="https://rivetingai.onrender.com/register?team_token={teamToken}" class="linkbtn">Click to Access {firstName}'s Document</a>
             </div>
             <div class="secondlink">
                 <a href="#" class="link">Click this URL if the above button does not work:
