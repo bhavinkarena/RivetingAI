@@ -155,7 +155,7 @@ def login_user(
         print("-----------coockie token--------", request.cookies.get("token"))
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=e)
     
 @app.get("/logout")
 def logout_user(response: Response):
