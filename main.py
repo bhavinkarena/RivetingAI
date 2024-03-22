@@ -2,6 +2,7 @@ import re
 from fastapi import FastAPI, Depends, Form, HTTPException,File, Query, Request, UploadFile, Response
 from fastapi.responses import HTMLResponse
 from httpx import HTTPError
+import jwt
 from sqlalchemy.orm import Session as DBSession
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
@@ -33,7 +34,7 @@ from crud import (
     team_by_team_name,
     team_by_team_token,
 )
-from fastapi.security import OAuth2AuthorizationCodeBearer
+from fastapi.security import OAuth2AuthorizationCodeBearer, OAuth2PasswordBearer
 from fastapi.responses import RedirectResponse
 import join_team_mail
 import upload_document_mail
@@ -81,7 +82,7 @@ async def root():
 
 @app.post("/register")
 def register_user(
-        request: Request, response: Response, user: schemas.UserCreate, team_token: str = None, db: DBSession = Depends(get_db)
+       response: Response, user: schemas.UserCreate, team_token: str = None, db: DBSession = Depends(get_db)
 ):
     try:
         password = pwd_context.hash(user.password)
@@ -123,7 +124,6 @@ def register_user(
 @app.post("/login") 
 def login_user(
     user: schemas.UserLogin,
-    request: Request,
     response: Response,
     team_token: str = None,
     db: DBSession = Depends(get_db),
@@ -761,3 +761,18 @@ def read_current_user(request: Request,db: DBSession = Depends(get_db),):
     token = request.cookies.get("token")
     user = get_user_by_token(db, token=token)
     return {"firstname":user.first_name, "lastname":user.last_name, "email":user.email}
+
+
+def get_current_user(token: str = Depends(OAuth2PasswordBearer(tokenUrl="/token"))):
+    try:
+        payload = jwt.decode(token, config('SECRET_KEY'), algorithms=[config('ALGORITHM')])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.DecodeError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+# Endpoint to get current user
+@app.get("/api/user")
+async def get_current_user_info(current_user: dict = Depends(get_current_user)):
+    return current_user
