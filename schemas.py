@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel
 
 class UserCreate(BaseModel):
@@ -13,4 +14,8 @@ class UserLogin(BaseModel):
 class CommentCreate(BaseModel):
     text: str
 
-
+class UserInToken(BaseModel):
+    id: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None

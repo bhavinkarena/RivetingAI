@@ -2,7 +2,7 @@ import re
 from fastapi import FastAPI, Depends, Form, HTTPException,File, Query, Request, UploadFile, Response
 from fastapi.responses import HTMLResponse
 from httpx import HTTPError
-import jwt
+from jose import jwt,JWTError
 from sqlalchemy.orm import Session as DBSession
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
@@ -763,16 +763,20 @@ def read_current_user(request: Request,db: DBSession = Depends(get_db),):
     return {"firstname":user.first_name, "lastname":user.last_name, "email":user.email}
 
 
-def get_current_user(token: str = Depends(OAuth2PasswordBearer(tokenUrl="/token"))):
+async def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, config('SECRET_KEY'), algorithms=[config('ALGORITHM')])
-        return payload
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token has expired")
-    except jwt.DecodeError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        user = schemas.UserInToken(**payload)
+        print(user)
+        return user
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
 
-# Endpoint to get current user
+# Example usage in a FastAPI route
 @app.get("/api/user")
-async def get_current_user_info(current_user: dict = Depends(get_current_user)):
-    return current_user
+async def get_current_user_info(current_user: schemas.UserInToken = Depends(get_current_user)):
+    return {
+        "first_name": current_user.first_name,
+        "last_name": current_user.last_name,
+        "email": current_user.email
+    }
