@@ -1,5 +1,5 @@
 import re
-from fastapi import Cookie, FastAPI, Depends, Form, HTTPException,File, Query, Request, UploadFile, Response
+from fastapi import Cookie, FastAPI, Depends, Form, HTTPException,File, Query, Request, UploadFile, status, Response
 from fastapi.responses import HTMLResponse
 from httpx import HTTPError
 from sqlalchemy.orm import Session as DBSession
@@ -33,7 +33,7 @@ from crud import (
     team_by_team_name,
     team_by_team_token,
 )
-from fastapi.security import OAuth2AuthorizationCodeBearer, OAuth2PasswordBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2AuthorizationCodeBearer, OAuth2PasswordBearer
 from fastapi.responses import RedirectResponse
 import join_team_mail
 import upload_document_mail
@@ -81,6 +81,23 @@ def get_db():
 async def root():
     return "<html><h1>This is the endpoint for RivetingAI's API. Please visit <a id='link'>This Link</a> for useful documentation.</h1><script>document.getElementById('link').href = window.location.href + 'docs'</script></html>"
 
+async def verify_token(creds: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
+    try:
+        token = creds.credentials
+        print(token)
+        return {"token": token}
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+# Route to receive the token from the frontend
+@app.post("/verify-token")
+async def verify_token_route(data: dict = Depends(verify_token)):
+    return data
+
 @app.post("/register")
 def register_user(
        response: Response, user: schemas.UserCreate, team_token: str = None, db: DBSession = Depends(get_db)
@@ -127,7 +144,7 @@ def login_user(
     user: schemas.UserLogin,
     response: Response,
     team_token: str = None,
-    db: DBSession = Depends(get_db),
+    db: DBSession = Depends(get_db)
 ):
     try:
         db_user = get_user_by_email(db, email=user.email)
@@ -761,8 +778,9 @@ async def get_file_count(team_id: int, db: DBSession = Depends(get_db)):
 def read_current_user(
     request: Request,
     db: DBSession = Depends(get_db),
+    creds: HTTPAuthorizationCredentials = Depends(HTTPBearer())
 ):
-    token = request.cookies.get("token")
+    token = creds.credentials
     if not token:
         raise HTTPException(status_code=401, detail="Authentication required")
     user = get_user_by_token(db, token=token)
