@@ -35,7 +35,6 @@ def create_team_api(
     file: UploadFile = File(...),
     user_email: List[str] = Form(...),
     team: str = Form(...),
-    version_number: str = Form(...),
     doc_name: str = Form(...),
     creds: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
     db: DBSession = Depends(get_db),
@@ -66,7 +65,6 @@ def create_team_api(
                 file=file_url,
                 team_id=team_db.id,
                 doc_name=doc_name,  # You can change this to the actual document name
-                version_number=version_number,  # You can change this to the actual version number
                 uploaded_by=user_owner.first_name + " " + user_owner.last_name,
             )
             db.add(document_record)

@@ -47,7 +47,6 @@ class Document(Base):
     team_id = Column(Integer, ForeignKey("teams.id"))
     file = Column(String)
     doc_name = Column(String, index=True)
-    version_number = Column(String)
     uploaded_by = Column(String)
     approve_count = Column(Integer, default=1)
     view_count = Column(Integer, default=0)
