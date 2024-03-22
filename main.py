@@ -2,7 +2,6 @@ import re
 from fastapi import FastAPI, Depends, Form, HTTPException,File, Query, Request, UploadFile, Response
 from fastapi.responses import HTMLResponse
 from httpx import HTTPError
-from jose import jwt,JWTError
 from sqlalchemy.orm import Session as DBSession
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
@@ -34,7 +33,7 @@ from crud import (
     team_by_team_name,
     team_by_team_token,
 )
-from fastapi.security import OAuth2AuthorizationCodeBearer, OAuth2PasswordBearer
+from fastapi.security import OAuth2AuthorizationCodeBearer
 from fastapi.responses import RedirectResponse
 import join_team_mail
 import upload_document_mail
@@ -761,22 +760,3 @@ def read_current_user(request: Request,db: DBSession = Depends(get_db),):
     token = request.cookies.get("token")
     user = get_user_by_token(db, token=token)
     return {"firstname":user.first_name, "lastname":user.last_name, "email":user.email}
-
-
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    try:
-        payload = jwt.decode(token, config('SECRET_KEY'), algorithms=[config('ALGORITHM')])
-        user = schemas.UserInToken(**payload)
-        print(user)
-        return user
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Could not validate credentials")
-
-# Example usage in a FastAPI route
-@app.get("/api/user")
-async def get_current_user_info(current_user: schemas.UserInToken = Depends(get_current_user)):
-    return {
-        "first_name": current_user.first_name,
-        "last_name": current_user.last_name,
-        "email": current_user.email
-    }
