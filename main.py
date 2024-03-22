@@ -765,5 +765,9 @@ def read_current_user(
     db: DBSession = Depends(get_db),
 ):
     token = request.cookies.get("token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Authentication required")
     user = get_user_by_token(db, token=token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid token")
     return {"firstname": user.first_name, "lastname": user.last_name,"email": user.email}
