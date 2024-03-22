@@ -2,8 +2,6 @@ import re
 from fastapi import Cookie, FastAPI, Depends, Form, HTTPException,File, Query, Request, UploadFile, Response
 from fastapi.responses import HTMLResponse
 from httpx import HTTPError
-from jose import jwt,JWTError
-
 from sqlalchemy.orm import Session as DBSession
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
@@ -68,8 +66,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 def get_db():
