@@ -183,7 +183,7 @@ def send_email(recipient: str, teamToken: str, documentTeamName: str, firstName:
 </html>
 """
 
-    message.attach(MIMEText(body_content, "plain"))
+    message.attach(MIMEText(body_content, "html"))
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp_server:
         smtp_server.login(sender, password)
