@@ -16,7 +16,7 @@ def send_email(recipient: str, teamToken: str, documentTeamName: str, firstName:
     message["From"] = sender
     message["To"] = recipient
     message["Subject"] = (
-        f"""{firstName} has shared a document with you in "{documentTeamName}""" ""
+        f"""{firstName} has invited you to "{documentTeamName}""" ""
     )
 
     body_content = f"""<!DOCTYPE html>
@@ -148,24 +148,24 @@ def send_email(recipient: str, teamToken: str, documentTeamName: str, firstName:
         <div class="head">
             <img src="./static/RivetingAI.svg" alt="" />
             <h2>
-                <span>{firstName}</span> has shared a secure <br />
-                document with you in “{documentTeamName}”
+                <span>{firstName}</span> has invited you to “{documentTeamName}”
             </h2>
         </div>
         <div class="emailcontent">
             <p>Hello,</p>
             <p>
-                <span>{firstName}</span> has shared a document with you in “{documentTeamName}.”
+                you have been invited to join<span>{firstName}'s</span> document team titled “{documentTeamName}.”
             </p>
-            <p>Click the link below to securely access this document:</p>
+            <p>Click the link below to securely join this document team where you</p><br>
+            <p>can access, review and edit your teams documents.</p>
         </div>
         <div class="subcontent">
             <div class="firstlink">
-                <a href="http://localhost:8000/register?team_token={teamToken}" class="linkbtn">Click to Access {firstName}'s Document</a>
+                <a href="https://rivetingai.onrender.com/register?team_token={teamToken}" class="linkbtn">Click to join {firstName}'s Team</a>
             </div>
             <div class="secondlink">
                 <a href="#" class="link">Click this URL if the above button does not work:
-                <span>httpss://rivetingai.com/efefefewfeff</span></a>
+                <span>https://rivetingai.onrender.com/register?team_token={teamToken}</span></a>
             </div>
             <div class="Regards">
                 <p>Best Regards, <span>RivetingAI</span></p>

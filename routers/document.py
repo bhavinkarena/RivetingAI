@@ -37,7 +37,6 @@ async def upload_file(
     file: UploadFile = File(...),
     doc_name: str = Form(...),
     share_with: List[str] = Form(...),
-    version_number: str = Form(...),
     creds: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
     db: DBSession = Depends(get_db),
 ):
@@ -59,7 +58,6 @@ async def upload_file(
             file=file_url,
             team_id=team_id,
             doc_name=doc_name,
-            version_number=version_number,
             uploaded_by=user_owner.first_name + " " + user_owner.last_name,
         )
         db.add(document_record)
