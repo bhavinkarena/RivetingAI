@@ -1,7 +1,9 @@
 import re
-from fastapi import FastAPI, Depends, Form, HTTPException,File, Query, Request, UploadFile, Response
+from fastapi import Cookie, FastAPI, Depends, Form, HTTPException,File, Query, Request, UploadFile, Response
 from fastapi.responses import HTMLResponse
 from httpx import HTTPError
+from jose import jwt,JWTError
+
 from sqlalchemy.orm import Session as DBSession
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
@@ -114,7 +116,7 @@ def register_user(
             team_user = get_teamUser_by_team_user(db, team=team.id, user=user.id)
             team_user.is_accept = True
         db.commit()
-        response.set_cookie(key="token", value=access_token, httponly=True)
+        response.set_cookie(key="token", value=access_token, httponly=True, secure=True, samesite="None")
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
         print("Error:", e)
@@ -144,7 +146,7 @@ def login_user(
             team_user = get_teamUser_by_team_user(db, team=team.id, user=user.id)
             team_user.is_accept = True
         db.commit()
-        response.set_cookie(key="token", value=access_token, httponly=True)
+        response.set_cookie(key="token", value=access_token, httponly=True, secure=True, samesite="None")
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
         print("Error:", e)
@@ -756,7 +758,12 @@ async def get_file_count(team_id: int, db: DBSession = Depends(get_db)):
         return {"message": f"{file_count} files"}
     
 @app.get("/current_user/name")
-def read_current_user(request: Request,db: DBSession = Depends(get_db),):
-    token = request.cookies.get("token")
-    user = get_user_by_token(db, token=token)
-    return {"firstname":user.first_name, "lastname":user.last_name, "email":user.email}
+def read_current_user(request: Request, db: DBSession = Depends(get_db),
+                       token: str = Cookie(None)):
+    try:
+        payload = jwt.decode(token, config('SECRET_KEY'), algorithms=[config('ALGORITHM')])
+        email: str = payload.get("sub")
+        user = get_user_by_email(db, email=email)
+        return {"firstname": user.first_name, "lastname": user.last_name, "email": user.email}
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
