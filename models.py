@@ -2,7 +2,9 @@ from sqlalchemy import ARRAY, Boolean, Column, ForeignKey, Integer, String, Date
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 from sqlalchemy.orm import relationship
+
 Base = declarative_base()
+
 
 class User(Base):
     __tablename__ = "users"
@@ -20,6 +22,7 @@ class User(Base):
     teams = relationship("Team", secondary="team_users", back_populates="users")
     comments = relationship("Comment", back_populates="user")
 
+
 class Team(Base):
     __tablename__ = "teams"
     id = Column(Integer, primary_key=True, index=True)
@@ -28,13 +31,15 @@ class Team(Base):
     team_token = Column(String)
 
     users = relationship("User", secondary="team_users", back_populates="teams")
-    
+
+
 class TeamUser(Base):
     __tablename__ = "team_users"
     id = Column(Integer, primary_key=True, index=True)
     team_id = Column(Integer, ForeignKey("teams.id"))
     user_id = Column(Integer, ForeignKey("users.id"))
-    is_accept    = Column(Boolean, default=False)
+    is_accept = Column(Boolean, default=False)
+
 
 class Document(Base):
     __tablename__ = "documents"
@@ -59,6 +64,7 @@ class SharedWith(Base):
     approve = Column(Boolean, default=False)
     view = Column(Boolean, default=False)
 
+
 class Comment(Base):
     __tablename__ = "comments"
     id = Column(Integer, primary_key=True, index=True)
@@ -71,5 +77,6 @@ class Comment(Base):
     user = relationship("User", back_populates="comments")
     document = relationship("Document", back_populates="comments")
     replies = relationship("Comment", foreign_keys=[parent_comment_id])
+
 
 # Assuming User model already exists with a 'comments' relationship

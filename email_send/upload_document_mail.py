@@ -3,6 +3,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from decouple import config
 
+
+
 sender = config('EMAIL_SENDER')
 password = config('EMAIL_PASSWORD')
 
