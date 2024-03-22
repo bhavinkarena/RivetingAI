@@ -6,13 +6,13 @@ from decouple import config
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session as DBSession
-
 from database import SessionLocal
 from models import Comment, Document, SharedWith
 import schemas
 from routers.crud import add_document_to_owner, add_document_to_user, get_document_by_id, get_file_count_by_team_id, get_shared_with_by_document_id_and_user_id, get_user_by_email, get_user_by_id, get_user_by_token, get_users_by_team, team_by_team_name
-
 from email_send import upload_document_mail
+
+
 def get_db():
     db = SessionLocal()
     try:

@@ -7,11 +7,9 @@ class UserCreate(BaseModel):
     email: str
     password: str
 
-
 class UserLogin(BaseModel):
     email: str
     password: str
-
 
 class CommentCreate(BaseModel):
     text: str

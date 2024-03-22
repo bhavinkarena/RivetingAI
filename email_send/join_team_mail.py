@@ -3,9 +3,9 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from decouple import config
 
+
 sender = config("EMAIL_SENDER")
 password = config("EMAIL_PASSWORD")
-
 
 def send_email(recipient: str, teamToken: str, documentTeamName: str, firstName: str):
     if recipient.__contains__("string"):
@@ -20,8 +20,8 @@ def send_email(recipient: str, teamToken: str, documentTeamName: str, firstName:
     )
 
     body_content = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
+  <html lang="en">
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>

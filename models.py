@@ -1,10 +1,10 @@
-from sqlalchemy import ARRAY, Boolean, Column, ForeignKey, Integer, String, DateTime
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 from sqlalchemy.orm import relationship
 
-Base = declarative_base()
 
+Base = declarative_base()
 
 class User(Base):
     __tablename__ = "users"

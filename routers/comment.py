@@ -1,17 +1,15 @@
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from database import SessionLocal
-
 from datetime import datetime
-
-
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session as DBSession
-
 from database import SessionLocal
 from models import Comment
 import schemas
 from routers.crud import get_comment_count_by_document_id,get_user_by_token,get_comment_by_id,get_comments_by_document_id
 import schemas
+
+
 def get_db():
     db = SessionLocal()
     try:

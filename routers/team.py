@@ -1,16 +1,15 @@
 import re
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from database import SessionLocal
 import boto3
 from decouple import config
 from typing import List
 from sqlalchemy.orm import Session as DBSession
-
 from models import Document
 from routers.crud import add_document_to_owner, add_document_to_user, add_owner_to_team, add_user_to_team, create_team, get_team_by_id, get_user_by_email, get_user_by_token 
-
 from email_send import join_team_mail
+
 
 def get_db():
     db = SessionLocal()
@@ -89,6 +88,7 @@ def create_team_api(
         return {"message": f"Team {team_db.team_name} created successfully "}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/invite/{team_id}")
 async def invite_team_members(

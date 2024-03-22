@@ -3,10 +3,10 @@ import models
 from database import engine
 from routers import team, user, document, comment 
 import os
-
 models.Base.metadata.create_all(bind=engine)
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.middleware.cors import CORSMiddleware
+
 
 origins = [
     "*",
@@ -17,6 +17,7 @@ origins = [
     "https://rivetingai.onrender.com/",
     "http://localhost:3000"
 ]
+
 app = FastAPI()
 
 app.add_middleware(SessionMiddleware, secret_key=os.getenv('SESSION_SECRET_KEY'))

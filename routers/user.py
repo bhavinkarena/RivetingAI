@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session as DBSession
 from routers.crud import add_user_to_team, create_access_token, get_teamUser_by_team_user, get_user_by_email, get_user_by_google_id, get_user_by_microsoft_id, get_user_by_token, team_by_team_token
 import schemas
 
+
 def get_db():
     db = SessionLocal()
     try:
@@ -70,8 +71,6 @@ def register_user(
         raise HTTPException(status_code=500, detail=str(e))
     
 
-
-
 @app.post("/login")
 def login_user(
     user: schemas.UserLogin,
@@ -107,10 +106,12 @@ def login_user(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
+
 @app.get("/logout")
 def logout_user(response: Response):
     response.delete_cookie(key="token")
     return {"message": "Logout successful"}
+
 
 @app.get("/current_user/name")
 def read_current_user(
@@ -136,7 +137,6 @@ oauth2_scheme = OAuth2AuthorizationCodeBearer(
 GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = config("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = config("GOOGLE_REDIRECT_URI")
-
 
 @app.get("/login/google/")
 async def login_with_google():

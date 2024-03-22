@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import uuid
 from decouple import config
-
 from jose import jwt as jose_jwt
 from requests import Session
 from models import Document, SharedWith, Team, TeamUser, User, Comment
