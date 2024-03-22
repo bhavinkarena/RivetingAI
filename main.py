@@ -35,7 +35,7 @@ from crud import (
     team_by_team_name,
     team_by_team_token,
 )
-from fastapi.security import OAuth2AuthorizationCodeBearer
+from fastapi.security import OAuth2AuthorizationCodeBearer, OAuth2PasswordBearer
 from fastapi.responses import RedirectResponse
 import join_team_mail
 import upload_document_mail
@@ -47,6 +47,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import requests
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
@@ -758,12 +760,10 @@ async def get_file_count(team_id: int, db: DBSession = Depends(get_db)):
         return {"message": f"{file_count} files"}
     
 @app.get("/current_user/name")
-def read_current_user(request: Request, db: DBSession = Depends(get_db),
-                       token: str = Cookie(None)):
-    try:
-        payload = jwt.decode(token, config('SECRET_KEY'), algorithms=[config('ALGORITHM')])
-        email: str = payload.get("sub")
-        user = get_user_by_email(db, email=email)
-        return {"firstname": user.first_name, "lastname": user.last_name, "email": user.email}
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Could not validate credentials")
+def read_current_user(
+    request: Request,
+    db: DBSession = Depends(get_db),
+):
+    token = request.cookies.get("token")
+    user = get_user_by_token(db, token=token)
+    return {"firstname": user.first_name, "lastname": user.last_name,"email": user.email}
