@@ -108,14 +108,19 @@ def login_user(
     
 
 @app.get("/logout")
-def logout_user(response: Response):
+def logout_user(response: Response, db: DBSession = Depends(get_db),creds: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
+    token = creds.credentials
+    if token:
+        user = get_user_by_token(db, token=token)
+        if user:
+            user.security_token = None
+            db.commit()
     response.delete_cookie(key="token")
     return {"message": "Logout successful"}
 
 
 @app.get("/current_user/name")
 def read_current_user(
-    
     db: DBSession = Depends(get_db),
     creds: HTTPAuthorizationCredentials = Depends(HTTPBearer())
 ):

@@ -146,7 +146,7 @@ def send_email(recipient: str, doc_id:int, documentTeamName: str, firstName: str
 <body>
     <div class="emailsection">
         <div class="head">
-            <img src="./static/RivetingAI.svg" alt="" />
+            <img src="./static/logo.svg" alt="" />
             <h2>
                 <span>{firstName}</span> has shared a secure <br />
                 document with you in “{documentTeamName}”

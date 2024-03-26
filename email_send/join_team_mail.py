@@ -146,7 +146,7 @@ def send_email(recipient: str, teamToken: str, documentTeamName: str, firstName:
 <body>
     <div class="emailsection">
         <div class="head">
-            <img src="./static/RivetingAI.svg" alt="" />
+            <img src="./static/logo.svg" alt="" />
             <h2>
                 <span>{firstName}</span> has invited you to “{documentTeamName}”
             </h2>
