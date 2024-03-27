@@ -1,4 +1,3 @@
-from datetime import datetime
 import re
 from typing import List
 import boto3
@@ -6,10 +5,23 @@ from decouple import config
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session as DBSession
+
 from database import SessionLocal
-from models import Comment, Document, SharedWith
-import schemas
-from routers.crud import add_document_to_owner, add_document_to_user, get_document_by_id, get_file_count_by_team_id, get_shared_with_by_document_id_and_user_id, get_user_by_email, get_user_by_id, get_user_by_token, get_users_by_team, team_by_team_name
+from models import Document, SharedWith
+from routers.crud import (
+    add_document_to_owner,
+    add_document_to_user,
+    get_document_by_id,
+    get_file_count_by_team_id,
+    get_shared_with_by_document_id_and_user_id,
+    get_user_by_email,
+    get_user_by_id,
+    get_user_by_token,
+    get_users_by_team,
+    team_by_team_name,
+)
+from utils_file.apiError import ApiError
+from utils_file.apiResponse import ApiResponse
 from email_send import upload_document_mail
 
 
@@ -19,6 +31,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
 
 app = APIRouter()
 
@@ -33,7 +46,6 @@ AWS_BUCKET_NAME = config("AWS_BUCKET_NAME")
 @app.post("/upload/{team_id}")
 async def upload_file(
     team_id: int,
-    request: Request,
     file: UploadFile = File(...),
     doc_name: str = Form(...),
     share_with: List[str] = Form(...),
@@ -41,18 +53,17 @@ async def upload_file(
     db: DBSession = Depends(get_db),
 ):
     try:
-        print("start")
-        print(share_with)
         # Upload file to S3 bucket
         s3_client.upload_fileobj(file.file, config("AWS_BUCKET_NAME"), file.filename)
         # Generate public URL of the uploaded file
-        file_url = f"https://{AWS_BUCKET_NAME}.s3.amazonaws.com/{file.filename}"
-        print(file_url)
-        # file_url = "Dummy"
-        # print(file_url)
-        # return {"file_url": file_url}
+        file_url = (
+            f"https://{config('AWS_BUCKET_NAME')}.s3.amazonaws.com/{file.filename}"
+        )
+
+        # Get user information from token
         token = creds.credentials
         user_owner = get_user_by_token(db, token=token)
+
         # Create document record in the database
         document_record = Document(
             file=file_url,
@@ -62,71 +73,68 @@ async def upload_file(
         )
         db.add(document_record)
         db.commit()
+
         shared_with_emails = []
-        # Inside your /upload endpoint
+
+        # Share document with users or teams
         for item in share_with:
-            if re.match(r"[^@]+@[^@]+\.[^@]+", item):
-                print("Email Found")
+            if re.match(r"[^@]+@[^@]+\.[^@]+", item):  # Check if it's an email
                 email = item
                 user = get_user_by_email(db, email=email)
                 if user:
                     add_document_to_user(db, doc_id=document_record.id, user_id=user.id)
-                    print(f"Document shared with user '{email}'")
                     shared_with_emails.append(email)
-                    print(f"Document shared with user '{email}'")
                 else:
-                    print(f"User with email '{email}' not found.")
-            else:
-                first_name = item.split()[0]
-                try:
-                    last_name = item.split()[1]
-                except IndexError:
-                    last_name = ""
-                all_users = get_users_by_team(db, team_id=team_id)
-                for i in all_users:
-                    user_of_team = get_user_by_id(db, user_id=i.user_id)
-                    if (
-                        user_of_team.first_name == first_name
-                        and user_of_team.last_name == last_name
-                    ):
-                        print(user_of_team.email)
-                        add_document_to_user(
-                            db, doc_id=document_record.id, user_id=user_of_team.id
-                        )
-                        print("User Found")
-                        print(f"Document shared with user '{item}'")
-                        shared_with_emails.append(user_of_team.email)
-                    # user = get_user_by_username(db, first_name=all_user_of_team.first_name, last_name=all_user_of_team.last_name)
-                    # if user:
-                    #     add_document_to_user(db, doc_id=document_record.id, user_id=user.id)
-                    #     print("User Found")
-                    #     print(f"Document shared with user '{item}'")
+                    raise HTTPException(
+                        status_code=404, detail=f"User with email '{email}' not found."
+                    )
+            else:  # Assuming it's a team name
                 team_name = item
                 team = team_by_team_name(db, team_name=team_name)
                 print(team)
                 if team:
                     team_users = get_users_by_team(db, team_id=team.id)
-                    print("Team Found")
+                    print("--------", team_users)
                     for team_user in team_users:
+                        print(team_user.id)
                         add_document_to_user(
                             db, doc_id=document_record.id, user_id=team_user.user_id
                         )
                         email_demo = get_user_by_id(db, user_id=team_user.user_id)
                         shared_with_emails.append(email_demo.email)
-                    print(f"Document shared with team '{team_name}'")
                 else:
-                    print(f" '{item}' not found.")
-        add_document_to_owner(db, doc_id=document_record.id, user_id=user_owner.id)
+                    raise HTTPException(
+                        status_code=404, detail=f"Team '{team_name}' not found."
+                    )
 
+        # Share document with owner
+        add_document_to_owner(db, doc_id=document_record.id, user_id=user_owner.id)
         print(shared_with_emails)
+        # Send email notifications
         for email in shared_with_emails:
             upload_document_mail.send_email(
-                email, document_record.id, team.team_name, user_owner.first_name
+                email,
+                document_record.id,
+                team.team_name,
+                user_owner.first_name,
+                user_owner.first_name + " " + user_owner.last_name,
             )
-            print(f"Email sent to {email}")
-        return {"message": "Document created and shared successfully"}
+
+        return ApiResponse(
+            statusCode=200,
+            data={
+                "id": document_record.id,
+                "file": document_record.file,
+                "doc_name": document_record.doc_name,
+                "uploaded_by": document_record.uploaded_by,
+                "shared_with": shared_with_emails,
+            },
+            message="Document created and shared successfully",
+        ).__dict__
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return ApiError(statusCode=500,message=str(e)).__dict__
+
 
 @app.delete("/document/delete/{document_id}")
 async def delete_document(document_id: int, db: DBSession = Depends(get_db)):
@@ -139,7 +147,11 @@ async def delete_document(document_id: int, db: DBSession = Depends(get_db)):
         db.delete(document)
         db.commit()
 
-        return {"message": "Document deleted successfully"}
+        return ApiResponse(
+            statusCode=200,
+            data={"id": document_id},
+            message="Document deleted successfully"
+        ).__dict__
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -152,14 +164,25 @@ async def get_document(
         document = get_document_by_id(db, document_id=document_id)
         if not document:
             raise HTTPException(status_code=404, detail="Document not found")
-        return document
+        return ApiResponse(
+            statusCode=200,
+            data={
+                "id": document.id,
+                "file": document.file,
+                "doc_name": document.doc_name,
+                "uploaded_by": document.uploaded_by,
+            },
+            message="Document fetched successfully",
+        ).__dict__
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.put("/document/approve/{document_id}")
 async def approve_shared_with(
-     document_id: int,creds: HTTPAuthorizationCredentials = Depends(HTTPBearer()), db: DBSession = Depends(get_db)
+    document_id: int,
+    creds: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
+    db: DBSession = Depends(get_db),
 ):
     try:
         document = get_document_by_id(db, document_id=document_id)
@@ -176,7 +199,11 @@ async def approve_shared_with(
         shared_with.approve = True
         document.approve_count += 1
         db.commit()
-        return {"message": "SharedWith entry approved successfully"}
+        return ApiResponse(
+            statusCode=200,
+            data={"id": document_id},
+            message="Document approved successfully",
+        ).__dict__
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -191,42 +218,20 @@ async def get_approve_count(document_id: int, db: DBSession = Depends(get_db)):
             .count()
         )
 
-        return {"approve_count": approve_count}
+        return ApiResponse(
+            statusCode=200,
+            data={"approve_count": approve_count},
+            message="Approve count fetched successfully",
+        ).__dict__
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/documents/{document_id}/comments")
-async def create_comment(
-    comment: schemas.CommentCreate,
+@app.put("/document/view/{document_id}")
+async def view_document(
     document_id: int,
     creds: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
     db: DBSession = Depends(get_db),
-):
-    document = get_document_by_id(db, document_id=document_id)
-    print(document)
-    if not document:
-        raise HTTPException(status_code=404, detail="Document not found")
-
-    token = creds.credentials
-    print("token :-", token)
-    user = get_user_by_token(db, token=token)
-
-    comment = Comment(
-        text=comment.text,
-        user_id=user.id,
-        document_id=document_id,
-        created_at=datetime.now(),
-    )
-    db.add(comment)
-    db.commit()
-    db.refresh(comment)
-    return comment
-
-
-@app.put("/document/view/{document_id}")
-async def view_document(
-    document_id: int,creds: HTTPAuthorizationCredentials = Depends(HTTPBearer()), db: DBSession = Depends(get_db)
 ):
     try:
         # Check if the document exists
@@ -249,7 +254,11 @@ async def view_document(
         document.view_count += 1
         db.commit()
 
-        return {"message": "Document viewed successfully"}
+        return ApiResponse(
+            statusCode=200,
+            data={"id": document_id},
+            message="Document viewed successfully",
+        ).__dict__
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -264,7 +273,11 @@ async def get_view_count(document_id: int, db: DBSession = Depends(get_db)):
             .count()
         )
 
-        return {"view_count": view_count}
+        return ApiResponse(
+            statusCode=200,
+            data={"view_count": view_count},
+            message="View count fetched successfully",
+        ).__dict__
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -275,4 +288,8 @@ async def get_file_count(team_id: int, db: DBSession = Depends(get_db)):
     if not file_count:
         raise HTTPException(status_code=404, detail="Team not found")
     else:
-        return {"message": f"{file_count} files"}
+        return ApiResponse(
+            statusCode=200,
+            data={"file_count": file_count},
+            message="File count fetched successfully",
+        ).__dict__

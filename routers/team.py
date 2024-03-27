@@ -1,13 +1,25 @@
 import re
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from database import SessionLocal
 import boto3
 from decouple import config
 from typing import List
 from sqlalchemy.orm import Session as DBSession
+
 from models import Document
-from routers.crud import add_document_to_owner, add_document_to_user, add_owner_to_team, add_user_to_team, create_team, get_team_by_id, get_user_by_email, get_user_by_token 
+from routers.crud import (
+    add_document_to_owner,
+    add_document_to_user,
+    add_owner_to_team,
+    add_user_to_team,
+    create_team,
+    get_team_by_id,
+    get_user_by_email,
+    get_user_by_token,
+)
+from utils_file.apiError import ApiError
+from utils_file.apiResponse import ApiResponse
 from email_send import join_team_mail
 
 
@@ -30,7 +42,6 @@ AWS_BUCKET_NAME = config("AWS_BUCKET_NAME")
 
 @app.post("/create_team")
 def create_team_api(
-    
     file: UploadFile = File(...),
     user_email: List[str] = Form(...),
     team: str = Form(...),
@@ -78,21 +89,34 @@ def create_team_api(
 
         # Send invitation emails to team members
         for email in user_email:
+            print(email)
             join_team_mail.send_email(
-                email, team_db.team_token, team_db.team_name, user_owner.first_name
+                email, team_db.team_token, team_db.team_name, user_owner.first_name,
+                user_owner.first_name + " " +user_owner.last_name
             )
             user = get_user_by_email(db, email=email)
             if user:
                 add_user_to_team(db, team_id=team_db.id, user_id=user.id)
 
-        return {"message": f"Team {team_db.team_name} created successfully "}
+        return ApiResponse(
+            statusCode=200,
+            data={
+                "file": document_record.file,
+                "team_id": team_db.id,
+                "doc_name": document_record.doc_name,
+                "uploaded_by": document_record.uploaded_by
+            },
+            message="Team created successfully",
+        ).__dict__
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return ApiError(
+            statusCode=500,
+            message=str(e),
+        ).__dict__
 
 
 @app.post("/invite/{team_id}")
 async def invite_team_members(
-    
     team_id: int,
     user_email: List[str] = Form(...),
     creds: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
@@ -117,12 +141,20 @@ async def invite_team_members(
                         team_db.team_token,
                         team_db.team_name,
                         user_owner.first_name,
+                        user_owner.first_name +" " +user_owner.last_name
                     )
                     print(f"Invitation sent to {email}")
                 else:
                     print(f"User with email '{email}' not found.")
             else:
                 print(f"Invalid email format: {email}")
-        return {"message": "Invitations sent successfully"}
+        return ApiResponse(
+            statusCode=200,
+            data={},
+            message="Invitation sent successfully",
+        ).__dict__
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return ApiError(
+            statusCode=500,
+            message=str(e),
+        ).__dict__
